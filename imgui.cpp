@@ -4653,6 +4653,7 @@ ImGuiWindow::ImGuiWindow(ImGuiContext* ctx, const char* name) : DrawListInst(NUL
     FontWindowScale = FontWindowScaleParents = 1.0f;
     SettingsOffset = -1;
     DockOrder = -1;
+    WindowIcon = (ImTextureID)0;
     DrawList = &DrawListInst;
     DrawList->_OwnerName = Name;
     DrawList->_SetDrawListSharedData(&Ctx->DrawListSharedData);
@@ -7616,6 +7617,27 @@ void ImGui::RenderWindowTitleBarContents(ImGuiWindow* window, const ImRect& titl
         pad_l += button_sz + style.ItemInnerSpacing.x;
     }
 
+    // Window icon
+    if (window->Flags & ImGuiWindowFlags_HasIcon) 
+    {
+        float icon_size = g.FontSize; 
+        ImVec2 icon_pos = ImVec2(title_bar_rect.Min.x + pad_l - 1.0f, title_bar_rect.Min.y + style.FramePadding.y);
+        ImRect icon_rect(icon_pos, ImVec2(icon_pos.x + icon_size, icon_pos.y + icon_size));
+        
+        // Header 
+        if (window->WindowIcon != 0) 
+        {
+            window->DrawList->AddImage(window->WindowIcon, icon_rect.Min, icon_rect.Max);
+        }
+        else 
+        {  
+            window->DrawList->AddRectFilled(icon_rect.Min, icon_rect.Max, IM_COL32(255, 255, 255, 255));
+        }
+
+        // Offset for title text to not overlap with the icon
+        pad_l += icon_size + style.ItemInnerSpacing.x - 3.0f;
+    }
+
     // Collapse button (submitting first so it gets priority when choosing a navigation init fallback)
     if (has_collapse_button)
         if (CollapseButton(window->GetID("#COLLAPSE"), collapse_button_pos, NULL))
@@ -9019,6 +9041,17 @@ ImVec2 ImGui::GetWindowPos()
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
     return window->Pos;
+}
+
+void ImGui::SetWindowIcon(ImTextureID icon_id)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    if (window == NULL)
+        return;
+
+    window->WindowIcon = icon_id;
+    window->Flags |= ImGuiWindowFlags_HasIcon;
 }
 
 void ImGui::SetWindowPos(ImGuiWindow* window, const ImVec2& pos, ImGuiCond cond)

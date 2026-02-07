@@ -10509,6 +10509,12 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
 
     // Calculate tab contents size
     ImVec2 size = TabItemCalcSize(label, (p_open != NULL) || (flags & ImGuiTabItemFlags_UnsavedDocument));
+
+    if (docked_window && (docked_window->Flags & ImGuiWindowFlags_HasIcon))
+    {
+        size.x += g.FontSize + g.Style.ItemInnerSpacing.x;
+    }
+
     tab->RequestedWidth = -1.0f;
     if (g.NextItemData.HasFlags & ImGuiNextItemDataFlags_HasWidth)
         size.x = tab->RequestedWidth = g.NextItemData.Width;
@@ -10734,6 +10740,37 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
         const ImGuiID close_button_id = p_open ? GetIDWithSeed("#CLOSE", NULL, docked_window ? docked_window->ID : id) : 0;
         bool just_closed;
         bool text_clipped;
+
+        // Draw window icon
+        if (docked_window && (docked_window->Flags & ImGuiWindowFlags_HasIcon))
+        {
+            float icon_size = g.FontSize;
+            float icon_padding = style.ItemInnerSpacing.x;
+            
+            // Позиція: беремо початок таба + відступ
+            ImVec2 icon_pos = bb.Min + ImVec2(0.4f, 0.0f) * style.TabRounding + style.FramePadding;
+            icon_pos.x += 2.0f; 
+            icon_pos.y += (bb.GetHeight() - icon_size) * 0.5f - style.FramePadding.y;
+
+            ImRect icon_rect(icon_pos, ImVec2(icon_pos.x + icon_size, icon_pos.y + icon_size));
+
+            if (docked_window->WindowIcon != 0)
+            {
+                display_draw_list->AddImage(
+                    docked_window->WindowIcon, 
+                    icon_rect.Min, icon_rect.Max);
+            }
+            else
+            {   
+                display_draw_list->AddRectFilled(
+                    icon_rect.Min, icon_rect.Max, 
+                    IM_COL32(255, 255, 255, 255)); // Біла Заплатка Іконки
+            }
+
+            // Text offset
+            bb.Min.x += icon_size + icon_padding + 4;
+        }
+
         TabItemLabelAndCloseButton(display_draw_list, bb, tab_just_unsaved ? (flags & ~ImGuiTabItemFlags_UnsavedDocument) : flags, tab_bar->FramePadding, label, id, close_button_id, tab_contents_visible, &just_closed, &text_clipped);
         if (just_closed && p_open != NULL)
         {
